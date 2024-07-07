@@ -7,7 +7,9 @@
 
   let loadingState = "none";
   let printTemplateRef;
-  let text = 'https://example.com'; // 要生成二维码的文本
+  const url = "http://localhost:5173/warrantyinfo?code=";
+  let code = ""
+  let text = url; // 要生成二维码的文本
   let qrCodeDataURL = ''; // QR码的data URL
   let reportData = {
       title: '撕毁质保失效',
@@ -15,7 +17,8 @@
   };
 
   onMount(() => {
-    text = `${uuidv4()}`;
+    code = uuidv4();
+    text = `${url}${code}`;
     generateQRCode(text);
     if (typeof window !== 'undefined') {
       window.addEventListener('afterprint', () => {
@@ -32,9 +35,18 @@
     }
   });
 
+  function getCurrentDateWithYearOffset(yearsOffset) {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + yearsOffset);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
   //生成二维码
-  async function generateQRCode(text) {
-    text = `${uuidv4()}`;
+  async function generateQRCode() {
+    code = uuidv4()
+    text = `${url}${code}`;
     try {
       qrCodeDataURL = await QRCode.toDataURL(text);
     } catch (err) {
@@ -97,6 +109,7 @@
   <PrintButton handlerClick = {printQRCode} text = "打印" />
   <br>
   <PrintButton handlerClick = {async () => {
+    
     loadingState = "flex";
     
     try {
@@ -106,11 +119,12 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          "code": "100861",
+          "code": code,
+          "url": text,
           "enabled": "1",
           "modify": "1",
-          "starttime": "2024-07-06",
-          "endtime": "2026-07-06"
+          "starttime": getCurrentDateWithYearOffset(0),
+          "endtime": getCurrentDateWithYearOffset(2)
         })
       });
 
@@ -127,7 +141,9 @@
     } 
     loadingState = "none";
     // alert("质保码已生效")
-    generateQRCode(uuidv4())
+    code = uuidv4();
+    text = url + code;
+    generateQRCode()
   }} text = "使用质保码" />
 
 </div>
